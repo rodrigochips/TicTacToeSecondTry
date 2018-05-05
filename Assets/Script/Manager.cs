@@ -76,7 +76,7 @@ public class Manager : MonoBehaviour {
                             PrintBoard(TicTacToeGrid);
                         }
                         if (shouldCheckWinner)
-                            if (DoWeHaveAWiner(isPlayerOne ? '2' : '1'))
+                            if (DoWeHaveAWiner(TicTacToeGrid, isPlayerOne ? '2' : '1'))
                                 aWinner = true;//Debug.Log ("Winner");
                             else
                                 Debug.Log("Not yet");
@@ -86,7 +86,7 @@ public class Manager : MonoBehaviour {
             else {
 				char[,] dummy = new char[SIZE, SIZE];
 				dummy = TicTacToeGrid;
-                LookForOptions(dummy, gameStep, 99999, isPlayerOne);
+                LookForOptions(dummy, gameStep, isPlayerOne);
 
             }
     }
@@ -149,7 +149,7 @@ public class Manager : MonoBehaviour {
 			}
 		}
 		*****************************************************/
-		return a;
+		return 0;
     }
 
     void PrintBoard(char[,] board)

@@ -5,7 +5,29 @@ using UnityEngine.UI;
 
 public class Manager : MonoBehaviour {
 
-	public char[,] TicTacToeGrid;
+    #region SINGLETON PATTERN
+    public static Manager _instance;
+    public static Manager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = GameObject.FindObjectOfType<Manager>();
+
+                if (_instance == null)
+                {
+                    GameObject container = new GameObject("Manager");
+                    _instance = container.AddComponent<Manager>();
+                }
+            }
+
+            return _instance;
+        }
+    }
+    #endregion
+
+    public char[,] TicTacToeGrid;
 	public short SIZE = 3;
 	bool isPlayerOne = true;
 	public Sprite[] spt;
@@ -25,18 +47,12 @@ public class Manager : MonoBehaviour {
 		char[,] dummy = new char[SIZE, SIZE];
         gameStep = (SIZE*SIZE)-1;
 		dummy = TicTacToeGrid;
-		isHuman = false;
+		isHuman = true;
 		PlaceXorO (dummy);
 
 	}
 
-	void CamPos()
-	{
-		float z = (float)(SIZE - 1) / 2;
-		transform.position = new Vector3 (z, z, -10);
-		GetComponent<Camera>().orthographicSize = (float)SIZE/2;
-	}
-
+    //Construcao da matriz visual do jogo
 	void BuildBoard()
 	{
 		TicTacToeGrid = new char[SIZE,SIZE];
@@ -53,11 +69,12 @@ public class Manager : MonoBehaviour {
 			}
 	}
 
+    //Inicializacao do board
 	void PlaceXorO(char[,] myDummy)
 	{
 		int count = 0;
-		for (int x = 0; x < 3; x++)
-			for (int y = 0; y < 3; y++)
+		for (int x = 0; x < SIZE; x++)
+			for (int y = 0; y < SIZE; y++)
 				if (myDummy [x, y] == '0')
 					count++;
 	}
@@ -152,15 +169,24 @@ public class Manager : MonoBehaviour {
 		return 0;
     }
 
+    //Debug do board, para ter certeza que esta tudo bem.
     void PrintBoard(char[,] board)
     {
+        string brd = "";
         for (int i = 0; i < SIZE; i++)
+        {
+            
             for (int j = 0; j < SIZE; j++)
-                Debug.Log( i + " , "+ j +" : "+ board[i, j]);
+            {
+                brd += "|" + board[j, i];
+            }
+            brd += "\n";
+        }
+        Debug.Log(brd);
 
     }
 
-	int CalculateScore(char[,] board, bool currentPlayer){
+    int CalculateScore(char[,] board, bool currentPlayer){
 
 		if(currentPlayer)
 		{
@@ -175,22 +201,24 @@ public class Manager : MonoBehaviour {
 
 	}
 
-    bool DoWeHaveAWiner(char[,] board, char player)
+    //Verificacao se ha um vencedor
+    public bool DoWeHaveAWiner(char[,] board, char player)
     {
         if ((board[0, 0] == player && board[1, 1] == player && board[2, 2] == player) ||
             (board[0, 2] == player && board[1, 1] == player && board[2, 0] == player))
         {
-            Debug.Log("Diagonal: "+ player+" : "+ board[2, 0]);
+            Debug.Log("Diagonal: " + player + " : " + board[2, 0]);
             return true;
 
-        }else
-        { 
+        }
+        else
+        {
 
             for (int i = 0; i < 3; i++)
-			    if ((board [i, 2] == player && board [i, 1] == player && board [i, 0] == player) ||
-				   (board [2, i] == player && board [1, i] == player && board [0, i] == player))
+                if ((board[i, 2] == player && board[i, 1] == player && board[i, 0] == player) ||
+                   (board[2, i] == player && board[1, i] == player && board[0, i] == player))
                 {
-                    Debug.Log("Linha: " + i +" - "+ player+" - "+ board[0, i]);
+                    Debug.Log("Linha: " + i + " - " + player + " - " + board[0, i]);
                     return true;
                 }
         }
@@ -200,34 +228,45 @@ public class Manager : MonoBehaviour {
 
     //Tratamento do clique no grid
     public bool BoxClick(GameObject goBox)
-	{
-		bool madePlay = false;
-		//Pega o ID do box
-		string piece = goBox.name.Substring(4, 1);
-		int i = int.Parse (piece);
-		Debug.Log (((int)(i-1) / SIZE)+" , "+((int)(i-1) % SIZE));
+    {
+        bool madePlay = false;
+        //Pega o ID do box
+        string piece = goBox.name.Substring(4, 1);
+        int i = int.Parse(piece);
+        Debug.Log( ((int)(i - 1) % SIZE)+" , " + ((int)(i - 1) / SIZE));
 
-		//verifica se a casa está vazia
-		if (TicTacToeGrid [(int)(i - 1) / SIZE, (int)(i - 1) % SIZE] == '0') {
+        //verifica se a casa está vazia
+        if (TicTacToeGrid[(int)(i - 1) % SIZE, (int)(i - 1) / SIZE] == '0') {
             Sprite img = goBox.transform.GetComponent<Sprite>();
-			if (isPlayerOne) {
+            if (isPlayerOne) {
                 PlaceXOnBoard('1', i);
-				madePlay = true;
-			} else {
+                madePlay = true;
+            } else {
                 PlaceXOnBoard('2', i);
                 madePlay = true;
-			}
-		}
-		return madePlay;
+            }
+        }
+        return madePlay;
 
-	}
+    }
 
+    //Place the item
     void PlaceXOnBoard(char playerType, int square )
     {
         Debug.Log(playerType+ " - "+square);
-        TicTacToeGrid[(int)(square - 1) / SIZE, (int)(square - 1) % SIZE] = playerType;
-        Squares[(int)(square - 1) / SIZE, (int)(square - 1) % SIZE].transform.GetComponent<SpriteRenderer>().sprite = spt[(int.Parse(playerType.ToString())-1)];
+        TicTacToeGrid[(int)(square - 1) % SIZE , (int)(square - 1) / SIZE] = playerType;
+        Squares[(int)(square - 1) % SIZE, (int)(square - 1) / SIZE].transform.GetComponent<SpriteRenderer>().sprite = spt[(int.Parse(playerType.ToString())-1)];
         isPlayerOne = !isPlayerOne;
 
     }
+
+
+    //Ajuste da camera para multiplos tamanhos de tabuleiro
+    void CamPos()
+    {
+        float z = (float)(SIZE - 1) / 2;
+        transform.position = new Vector3(z, z, -10);
+        GetComponent<Camera>().orthographicSize = (float)SIZE / 2;
+    }
+
 }

@@ -5,27 +5,8 @@ using UnityEngine.UI;
 
 public class Manager : MonoBehaviour {
 
-    #region SINGLETON PATTERN
-    public static Manager _instance;
-    public static Manager Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = GameObject.FindObjectOfType<Manager>();
 
-                if (_instance == null)
-                {
-                    GameObject container = new GameObject("Manager");
-                    _instance = container.AddComponent<Manager>();
-                }
-            }
-
-            return _instance;
-        }
-    }
-    #endregion
+    AIInput ai = new AIInput();
 
     public char[,] TicTacToeGrid;
 	public short SIZE = 3;
@@ -36,8 +17,9 @@ public class Manager : MonoBehaviour {
 
     bool aWinner = false;
 	Image myImageComponent;
-	bool isHuman;
+	public bool isHuman = true;
 	int gameStep;
+    bool isMultiplayer;
 
 	// Use this for initialization
 	void Start () {
@@ -47,8 +29,9 @@ public class Manager : MonoBehaviour {
 		char[,] dummy = new char[SIZE, SIZE];
         gameStep = (SIZE*SIZE)-1;
 		dummy = TicTacToeGrid;
-		isHuman = true;
-		PlaceXorO (dummy);
+        isMultiplayer = true;
+
+        PlaceXorO (dummy);
 
 	}
 
@@ -61,6 +44,7 @@ public class Manager : MonoBehaviour {
 		//foreach (bool a in TicTacToeGrid)
 		for (short y = 0; y < SIZE; y++)
 			for (short x = 0; x < SIZE; x++) {
+                //yield return new WaitForSeconds(0);
 				Squares[x,y] = Instantiate (block, new Vector2 (x, y), Quaternion.identity) as GameObject;
 				Squares [x, y].name = "grid" + i;
 				Debug.Log("Build: "+x+" - "+y);
@@ -82,91 +66,65 @@ public class Manager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-        if(!aWinner)
-            if (isHuman) { 
-		        if (Input.GetMouseButtonUp (0)) {
-			        bool shouldCheckWinner = false;
-			        Vector3 wp = Camera.main.ScreenToWorldPoint (Input.mousePosition);
-			        foreach (GameObject go in Squares)
-				        if (go.GetComponent<BoxCollider2D> ().OverlapPoint (wp)) {
-					        shouldCheckWinner = BoxClick (go);
-                            PrintBoard(TicTacToeGrid);
+        if (!aWinner)
+            if (isMultiplayer)
+            {
+                if (isHuman)
+                {
+                    if (GetHumanInput())
+                    {
+                        isHuman = false;
+                        gameStep--;
+                        if (DoWeHaveAWiner(TicTacToeGrid, isPlayerOne ? '2' : '1'))
+                        {
+                            aWinner = true;
+                            if (isPlayerOne) Debug.Log("Vitoria do jogador 2"); else Debug.Log("Vitoria do jogador 1");
                         }
-                        if (shouldCheckWinner)
-                            if (DoWeHaveAWiner(TicTacToeGrid, isPlayerOne ? '2' : '1'))
-                                aWinner = true;//Debug.Log ("Winner");
-                            else
-                                Debug.Log("Not yet");
+                        else
+                        {
+                            if (gameStep < 0)
+                                Debug.Log("EMPATE");
+                        }
+                    }
                 }
-               
-            }
-            else {
-				char[,] dummy = new char[SIZE, SIZE];
-				dummy = TicTacToeGrid;
-                LookForOptions(dummy, gameStep, isPlayerOne);
-
+                else
+                {
+                    
+                    Vector2 play = ai.GetAIInput(TicTacToeGrid, isPlayerOne ? '1' : '2');
+                    Debug.Log(play);
+                    PlaceXOnBoard(isPlayerOne ? '1' : '2', play);
+                    if (DoWeHaveAWiner(TicTacToeGrid, isPlayerOne ? '1' : '2'))
+                    {
+                        aWinner = true;
+                        if (!isPlayerOne) Debug.Log("Vitoria do jogador 2"); else Debug.Log("Vitoria do jogador 1");
+                    }
+                    else
+                    {
+                        if (gameStep < 0)
+                            Debug.Log("EMPATE");
+                    }
+                    isPlayerOne = !isPlayerOne;
+                    isHuman = true;
+                    gameStep--;
+                }
             }
     }
 
-    int LookForOptions(char[,] myDummy, int step, bool isPlayerOne)
+    bool GetHumanInput()
     {
-/*01 function minimax(node, depth, maximizingPlayer)
-02     if depth = 0 or node is a terminal node
-03         return the heuristic value of node
-
-04     if maximizingPlayer
-05         bestValue := −∞
-06         for each child of node
-07             v := minimax(child, depth − 1, FALSE)
-08             bestValue := max(bestValue, v)
-09         return bestValue
-
-10     else    (* minimizing player *)
-11         bestValue := +∞
-12         for each child of node
-13             v := minimax(child, depth − 1, TRUE)
-14             bestValue := min(bestValue, v)
-15         return bestValue
-		*/
-
-
-		if(isPlayerOne)
-		{
-			
-		}
-		else
-		{
-		}
-
-		/********************************************************
-		if(DoWeHaveAWiner(isPlayerOne ? '2' : '1') || step == 0)
-		{
-			return CalculateScore(myDummy, isPlayerOne);
-		}elif(isPlayerOne)
-		{	
-			int a = 99999;
-			for(int i = 0; i < (SIZE*SIZE); i++)
-			{
-				if(myDummy[((int)(i-1) / SIZE)+" , "+((int)(i-1) % SIZE)] == '0')
-				{
-					myDummy[((int)(i-1) / SIZE)+" , "+((int)(i-1) % SIZE)] == (isPlayerOne ? '2' : '1')
-					a = LookForOptions(myDummy), step-1, true);
-				}
-			}
-		}else
-		{
-			int a = -99999;
-			for(int i = 0; i < (SIZE*SIZE); i++)
-			{
-				if(myDummy[((int)(i-1) / SIZE)+" , "+((int)(i-1) % SIZE)] == '0')
-				{
-					myDummy[((int)(i-1) / SIZE)+" , "+((int)(i-1) % SIZE)] == (isPlayerOne ? '2' : '1')
-					a = max(a, LookForOptions(myDummy), step-1, false);
-				}
-			}
-		}
-		*****************************************************/
-		return 0;
+        if (Input.GetMouseButtonUp(0))
+        {
+            bool shouldCheckWinner = false;
+            Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            foreach (GameObject go in Squares)
+                if (go.GetComponent<BoxCollider2D>().OverlapPoint(wp))
+                {
+                    shouldCheckWinner = BoxClick(go);
+                    PrintBoard(TicTacToeGrid);
+                }
+            return shouldCheckWinner;
+        }
+        return false;
     }
 
     //Debug do board, para ter certeza que esta tudo bem.
@@ -251,13 +209,21 @@ public class Manager : MonoBehaviour {
     }
 
     //Place the item
-    void PlaceXOnBoard(char playerType, int square )
+    void PlaceXOnBoard(char playerType, int square)
     {
-        Debug.Log(playerType+ " - "+square);
-        TicTacToeGrid[(int)(square - 1) % SIZE , (int)(square - 1) / SIZE] = playerType;
-        Squares[(int)(square - 1) % SIZE, (int)(square - 1) / SIZE].transform.GetComponent<SpriteRenderer>().sprite = spt[(int.Parse(playerType.ToString())-1)];
+        Debug.Log(playerType + " - " + square);
+        TicTacToeGrid[(int)(square - 1) % SIZE, (int)(square - 1) / SIZE] = playerType;
+        Squares[(int)(square - 1) % SIZE, (int)(square - 1) / SIZE].transform.GetComponent<SpriteRenderer>().sprite = spt[(int.Parse(playerType.ToString()) - 1)];
         isPlayerOne = !isPlayerOne;
+    }
 
+    //Place the item
+    void PlaceXOnBoard(char playerType, Vector2 v2)
+    {
+        Debug.Log("AI: "+playerType + " - " + v2);
+        TicTacToeGrid[(int)v2.x, (int)v2.y] = playerType;
+        Squares[(int)v2.x, (int)v2.y].transform.GetComponent<SpriteRenderer>().sprite = spt[(int.Parse(playerType.ToString()) - 1)];
+        PrintBoard(TicTacToeGrid);
     }
 
 

@@ -2,16 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AIInput : MonoBehaviour {
+public class AIInput{
 
-    Manager manager = new Manager();
     char thisPlayer;
     char myEnemy;
-
-	// Use this for initialization
-	void Start () {
-		
-	}
 
     void Init(char myOption, char otherOption)
     {
@@ -19,31 +13,44 @@ public class AIInput : MonoBehaviour {
         myEnemy = otherOption;
     }
 	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    public Vector2 GetAIInput(char[,] board, char currentPlayer)
+    {
+        Casa melhorCasa = new Casa();
+        melhorCasa = FindTheBestMove(board, currentPlayer);
+        Vector2 v = new Vector2(melhorCasa.x, melhorCasa.y);
+        return v;
+    }
 
-    int FindTheBestMove(char[,] board, char currentPlayer)
+    Casa FindTheBestMove(char[,] board, char currentPlayer)
     {
         if (DoWeHaveAWiner(board, currentPlayer))
         {
             if (currentPlayer == thisPlayer)
-                return 10;
+                return new Casa(10);
             else
-                return -10;
+                return new Casa(-10);
         }
         else
         {
-            return 0;
+            bool moveForward = false;
+            for (int y = 0; y < 3; y++)
+            {
+                for (int x = 0; x < 3; x++)
+                {
+                    if (board[x, y] == '0')
+                        moveForward = true;
+                }
+            }
+            if (!moveForward)
+                return new Casa(0);
         }
 
         List<Casa> resultados = new List<Casa>();
-        Casa c = new Casa();
         for (int y = 0; y < 3; y++)
         {
             for (int x = 0; x < 3; x++)
             {
+                Casa c = new Casa();
                 c.x = x;
                 c.y = y;
 
@@ -51,12 +58,11 @@ public class AIInput : MonoBehaviour {
                 {
                     board[x, y] = currentPlayer;
                     if (currentPlayer == thisPlayer)
-                        c.val = FindTheBestMove(board, myEnemy);
+                        c.val = FindTheBestMove(board, myEnemy).val;
                     else
-                        c.val = FindTheBestMove(board, thisPlayer);
+                        c.val = FindTheBestMove(board, thisPlayer).val;
                     board[x, y] = '0';
                     resultados.Add(c);
-
                 }
             }
         }
@@ -65,7 +71,7 @@ public class AIInput : MonoBehaviour {
         if (currentPlayer == thisPlayer)
         {
             int bVal = -100000;
-            for (int x; x < resultados.Contains; x++)
+            for (int x = 0; x < resultados.Count; x++)
                 if (resultados[x].val > bVal)
                 {
                     MelhorValor = x;
@@ -75,7 +81,7 @@ public class AIInput : MonoBehaviour {
         else
         {
             int bVal = 100000;
-            for (int x; x < resultados.Contains; x++)
+            for (int x = 0; x < resultados.Count; x++)
                 if (resultados[x].val < bVal)
                 {
                     MelhorValor = x;
@@ -91,7 +97,7 @@ public class AIInput : MonoBehaviour {
         if ((board[0, 0] == player && board[1, 1] == player && board[2, 2] == player) ||
             (board[0, 2] == player && board[1, 1] == player && board[2, 0] == player))
         {
-            Debug.Log("Diagonal: " + player + " : " + board[2, 0]);
+            //Debug.Log("Diagonal: " + player + " : " + board[2, 0]);
             return true;
 
         }
@@ -102,7 +108,7 @@ public class AIInput : MonoBehaviour {
                 if ((board[i, 2] == player && board[i, 1] == player && board[i, 0] == player) ||
                    (board[2, i] == player && board[1, i] == player && board[0, i] == player))
                 {
-                    Debug.Log("Linha: " + i + " - " + player + " - " + board[0, i]);
+                    //Debug.Log("Linha: " + i + " - " + player + " - " + board[0, i]);
                     return true;
                 }
         }

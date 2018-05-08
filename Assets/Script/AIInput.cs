@@ -7,7 +7,7 @@ public class AIInput{
     char thisPlayer;
     char myEnemy;
 
-    void Init(char myOption, char otherOption)
+    public void Init(char myOption, char otherOption)
     {
         thisPlayer = myOption;
         myEnemy = otherOption;
@@ -16,6 +16,7 @@ public class AIInput{
     public Vector2 GetAIInput(char[,] board, char currentPlayer)
     {
         Casa melhorCasa = new Casa();
+		Debug.Log(currentPlayer+" - "+thisPlayer);
         melhorCasa = FindTheBestMove(board, currentPlayer);
         Vector2 v = new Vector2(melhorCasa.x, melhorCasa.y);
         return v;
@@ -25,10 +26,14 @@ public class AIInput{
     {
         if (DoWeHaveAWiner(board, currentPlayer))
         {
-            if (currentPlayer == thisPlayer)
+//			Debug.Log(currentPlayer+" - "+thisPlayer);
+            if (currentPlayer == thisPlayer){
+//				Debug.Log(10);
                 return new Casa(10);
-            else
+            }else{
+//				Debug.Log(-10);
                 return new Casa(-10);
+			}
         }
         else
         {
@@ -41,8 +46,10 @@ public class AIInput{
                         moveForward = true;
                 }
             }
-            if (!moveForward)
+            if (!moveForward){
+//				Debug.Log(-10);
                 return new Casa(0);
+			}
         }
 
         List<Casa> resultados = new List<Casa>();

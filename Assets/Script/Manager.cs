@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Manager : MonoBehaviour {
 
@@ -14,25 +15,38 @@ public class Manager : MonoBehaviour {
 	public Sprite[] spt;
 	public GameObject block;
 	public GameObject[,] Squares;
-
+	public GameObject BG;
     bool aWinner = false;
 	Image myImageComponent;
 	public bool isHuman = true;
 	int gameStep;
     bool isMultiplayer;
+	public GameObject[] botoes;
+	public Text vencedor;
+	bool GameStarted = false;
 
 	// Use this for initialization
 	void Start () {
+
+
+	}
+
+	public void GameStart(bool multi)
+	{
+		botoes[0].SetActive(false);
+		botoes[1].SetActive(false);
+		BG.SetActive(true);
         TicTacToeGrid = new char[SIZE, SIZE];
         BuildBoard ();
 		CamPos ();
 		char[,] dummy = new char[SIZE, SIZE];
         gameStep = (SIZE*SIZE)-1;
 		dummy = TicTacToeGrid;
-        isMultiplayer = true;
-
+        isMultiplayer = multi;
+		isHuman = true;
         PlaceXorO (dummy);
-
+		ai.Init('2','1');
+		GameStarted = true;
 	}
 
     //Construcao da matriz visual do jogo
@@ -65,8 +79,10 @@ public class Manager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-
+		
+		if(GameStarted)
         if (!aWinner)
+		{
             if (isMultiplayer)
             {
                 if (isHuman)
@@ -107,23 +123,47 @@ public class Manager : MonoBehaviour {
                     isHuman = true;
                     gameStep--;
                 }
-            }
+            }else
+			{
+                if (GetHumanInput())
+                {
+                    gameStep--;
+                    if (DoWeHaveAWiner(TicTacToeGrid, isPlayerOne ? '2' : '1'))
+                    {
+                        aWinner = true;
+                        if (isPlayerOne) 
+							vencedor.text = "Vitoria do jogador X"; 
+							else 
+							vencedor.text = "Vitoria do jogador O";;
+                    }
+                    else
+                    {
+                        if (gameStep < 0)
+                            Debug.Log("EMPATE");
+                    }
+                }			
+			}
+		}else
+		{
+			if (Input.GetMouseButtonUp(0) || Input.anyKey)
+				SceneManager.LoadScene(0);
+		}
     }
 
     bool GetHumanInput()
     {
-        if (Input.GetMouseButtonUp(0))
-        {
-            bool shouldCheckWinner = false;
-            Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            foreach (GameObject go in Squares)
-                if (go.GetComponent<BoxCollider2D>().OverlapPoint(wp))
-                {
-                    shouldCheckWinner = BoxClick(go);
-                    PrintBoard(TicTacToeGrid);
-                }
-            return shouldCheckWinner;
-        }
+			if (Input.GetMouseButtonUp(0))
+			{
+				bool shouldCheckWinner = false;
+				Vector3 wp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+				foreach (GameObject go in Squares)
+					if (go.GetComponent<BoxCollider2D>().OverlapPoint(wp))
+					{
+						shouldCheckWinner = BoxClick(go);
+						PrintBoard(TicTacToeGrid);
+					}
+				return shouldCheckWinner;
+			}
         return false;
     }
 
